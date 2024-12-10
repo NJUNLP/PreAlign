@@ -1,6 +1,4 @@
 #!/bin/bash
-export http_proxy=http://bj-rd-proxy.byted.org:3128
-export https_proxy=http://bj-rd-proxy.byted.org:3128
 
 pip install sentencepiece
 pip install deepspeed
