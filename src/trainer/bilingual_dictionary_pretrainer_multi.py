@@ -54,9 +54,9 @@ class BilingualDictionaryPretrainer(Trainer):
         states = states.transpose(0,1).reshape(L,N*B,H)
         indices = indices.transpose(0,1).reshape(L,N*B,H)
 
-        alignment_loss = self.metric(states, indices)
+        alignment_loss, pos_scores, scores = self.metric(states, indices)
 
-        loss, pos_scores, scores = self.alpha * alignment_loss + output.loss + max(0, scores.mean())
+        loss = self.alpha * alignment_loss + output.loss + max(0, scores.mean())
 
         if not model.training:
             return ({"loss": loss}, output) if return_outputs else {"loss": loss}
