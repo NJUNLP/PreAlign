@@ -26,7 +26,7 @@ class BilingualDictionaryPretrainer(Trainer):
         L,B,H = x.size()
         x = x.reshape(L*B, H)
         y = y.reshape(L*B,H)
-        cosine = F.consine_similarity(x,y)
+        cosine = F.cosine_similarity(x,y)
         return cosine.reshape(L,B).mean(dim=1)
 
     def compute_loss(self,model,inputs,return_outputs=False):
