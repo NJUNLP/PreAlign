@@ -13,13 +13,13 @@ from src.trainer.trainer import (
 )
 
 from src.trainer.lm_trainer import Trainer
-from src.trainer.trainer_utils import parse_layers, build_metric, ContrastiveMetric, AllGatherGrad, ContrastiveMultiMetric
+from src.trainer.trainer_utils import parse_layers, build_metric, ContrastiveMetric, AllGatherGrad, ContrastiveMultiMetric, AllGatherGradVarLen
 
 class BilingualDictionaryPretrainer(Trainer):
     def __init__(self,args,**kwargs):
         super().__init__(args=args,**kwargs)
         self.metric= ContrastiveMultiMetric(tau=0.1)
-        self.alpha = 0.1
+        self.alpha = 0.5
 
     def compute_pairwise_alignment(self, x_states, y_states):
         x,y = x_states.float(), y_states.float()
@@ -47,12 +47,8 @@ class BilingualDictionaryPretrainer(Trainer):
 
         states = torch.cat((hidden_states, ouptut_embed.unsqueeze(0)),dim=0)
 
-        states = AllGatherGrad.apply(states)
-        indices = AllGatherGrad.apply(indices)
-
-        N,L,B,H = states.size()
-        states = states.transpose(0,1).reshape(L,N*B,H)
-        indices = indices.transpose(0,1).reshape(L,N*B,H)
+        states = AllGatherGradVarLen.apply(states,1)
+        indices = AllGatherGradVarLen.apply(indices,0)
 
         alignment_loss, pos_scores, scores = self.metric(states, indices)
 
