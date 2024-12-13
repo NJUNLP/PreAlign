@@ -70,18 +70,17 @@ class AllGatherGradVarLen(torch.autograd.Function):
         return gathered_tensor
 
     @staticmethod
-    def backward(ctx, *grad_output):
-        torch.distributed.barrier()
+    def backward(ctx: Any, grad_output: torch.Tensor) -> Tuple[torch.Tensor, None, None]:
+        dim = ctx.dim
+        sizes = ctx.sizes
 
-        grad_output = grad_output[0]
+        grad_splits = torch.split(grad_output, sizes, dim=dim)
 
-        grad_output_list = torch.split(grad_output, ctx.sizes, dim=ctx.dim)
+        # The current process should receive only its corresponding gradient slice
+        rank = torch.distributed.get_rank()
+        grad_input = grad_splits[rank]
 
-        grad_output = grad_output_list[torch.distributed.get_rank()].contiguous()
-
-        torch.distributed.all_reduce(grad_output, op=torch.distributed.ReduceOp.SUM, async_op=False, group=ctx.group)
-
-        return grad_output, None, None
+        return grad_input, None, None  # None for non-tensor inputs
 
 
 
